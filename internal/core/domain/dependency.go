@@ -1,6 +1,17 @@
 package domain
 
-type Dependency struct {
-	Kind    string // "envvar", "response", "vault", etc.
-	Details map[string]string
+import (
+	"context"
+)
+
+// Core interface
+type Dependency interface {
+	Placeholder() string
+	Resolve(ctx context.Context, rctx *ResolverContext) (string, error)
+}
+
+// Shared context for all resolvers (e.g. previous results, prompt function)
+type ResolverContext struct {
+	Results map[string]Result
+	Prompt  func(name, prompt string) (string, error)
 }

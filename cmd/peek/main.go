@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/charmbracelet/log"
 	"github.com/johnnyfreeman/peek/internal/app"
 	"github.com/johnnyfreeman/peek/internal/core/domain"
 	"github.com/johnnyfreeman/peek/internal/infra/file"
@@ -51,7 +52,26 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 		Headers: map[string]string{
 			"Accept": "application/json",
 		},
+		Dependencies: []domain.Dependency{
+			domain.NewEnvVarDependency("city", "CITY", "Enter the city name"),
+			domain.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
+		},
 	}
+
+	resolverCtx := &domain.ResolverContext{
+		Results: map[string]domain.Result{},
+		Prompt: func(name, prompt string) (string, error) {
+			fmt.Printf("%s: ", prompt)
+			var input string
+			_, err := fmt.Scanln(&input)
+			return input, err
+		},
+	}
+
+	if err := request.Resolve(ctx, resolverCtx); err != nil {
+		panic(err)
+	}
+	log.Info("request resolved", "url", request.URL)
 
 	result, err := runner.Run(ctx, request)
 	if err != nil {
