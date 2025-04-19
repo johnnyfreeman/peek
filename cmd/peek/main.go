@@ -71,7 +71,7 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 	if err := request.Resolve(ctx, resolverCtx); err != nil {
 		panic(err)
 	}
-	log.Info("request resolved", "url", request.URL)
+	log.Debug("request resolved", "url", request.URL)
 
 	result, err := runner.Run(ctx, request)
 	if err != nil {
