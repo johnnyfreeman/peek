@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/johnnyfreeman/peek/internal/app"
@@ -15,15 +16,15 @@ type Loader interface {
 }
 
 type Runner interface {
-	Run(ctx context.Context, group domain.RequestGroup) ([]domain.Result, error)
+	Run(context.Context, domain.Request) (domain.Result, error)
 }
 
 type Formatter interface {
-	Format(results []domain.Result) ([]byte, error)
+	Format(results domain.Result) ([]byte, error)
 }
 
 func main() {
-	code, out := Run(os.Args[1:], file.NewYAMLLoader(), app.NewDefaultRunner(), app.NewPrettyFormatter())
+	code, out := Run(os.Args[1:], file.NewYAMLLoader(), app.NewDefaultRunner(http.DefaultClient), app.NewPrettyFormatter())
 	fmt.Println(out)
 	os.Exit(code)
 }
@@ -31,23 +32,33 @@ func main() {
 func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int, string) {
 	ctx := context.Background()
 
-	if len(args) < 2 || args[0] != "run" {
-		return 1, "Usage: peek run <file>"
+	// if len(args) < 2 || args[0] != "run" {
+	// 	return 1, "Usage: peek run <file>"
+	// }
+
+	// filename := args[1]
+
+	// group, err := loader.Load(ctx, filename)
+	// if err != nil {
+	// 	return 1, fmt.Sprintf("load error: %v", err)
+	// }
+
+	// TODO: prompt user to pick request from group and pass to runner
+	request := domain.Request{
+		Name:   "Get Current Weather",
+		Method: http.MethodGet,
+		URL:    "https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}",
+		Headers: map[string]string{
+			"Accept": "application/json",
+		},
 	}
 
-	filename := args[1]
-
-	group, err := loader.Load(ctx, filename)
-	if err != nil {
-		return 1, fmt.Sprintf("load error: %v", err)
-	}
-
-	results, err := runner.Run(ctx, group)
+	result, err := runner.Run(ctx, request)
 	if err != nil {
 		return 1, fmt.Sprintf("execution error: %v", err)
 	}
 
-	out, err := formatter.Format(results)
+	out, err := formatter.Format(result)
 	if err != nil {
 		return 1, fmt.Sprintf("format error: %v", err)
 	}

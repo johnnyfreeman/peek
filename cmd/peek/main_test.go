@@ -18,12 +18,12 @@ func (f fakeLoader) Load(ctx context.Context, filename string) (domain.RequestGr
 }
 
 type fakeRunner struct {
-	Results []domain.Result
-	Err     error
+	Result domain.Result
+	Err    error
 }
 
-func (f fakeRunner) Run(ctx context.Context, group domain.RequestGroup) ([]domain.Result, error) {
-	return f.Results, f.Err
+func (f fakeRunner) Run(ctx context.Context, request domain.Request) (domain.Result, error) {
+	return f.Result, f.Err
 }
 
 type fakeFormatter struct {
@@ -31,7 +31,7 @@ type fakeFormatter struct {
 	Err error
 }
 
-func (f fakeFormatter) Format(results []domain.Result) ([]byte, error) {
+func (f fakeFormatter) Format(result domain.Result) ([]byte, error) {
 	if f.Err != nil {
 		return nil, f.Err
 	}
@@ -42,9 +42,7 @@ func TestRun_Success(t *testing.T) {
 	args := []string{"run", "fake.yml"}
 
 	loader := fakeLoader{Group: domain.RequestGroup{Name: "test"}}
-	runner := fakeRunner{Results: []domain.Result{
-		{RequestName: "one", StatusCode: 200},
-	}}
+	runner := fakeRunner{Result: domain.Result{RequestName: "one", StatusCode: 200}}
 	formatter := fakeFormatter{Out: "Request one: 200 OK"}
 
 	code, out := Run(args, loader, runner, formatter)
