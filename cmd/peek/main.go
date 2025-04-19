@@ -44,21 +44,43 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 	// 	return 1, fmt.Sprintf("load error: %v", err)
 	// }
 
-	// TODO: prompt user to pick request from group and pass to runner
-	request := domain.Request{
-		Name:   "Get Current Weather",
-		Method: http.MethodGet,
-		URL:    "https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}",
-		Headers: map[string]string{
-			"Accept": "application/json",
-		},
-		Dependencies: []domain.Dependency{
-			domain.NewEnvVarDependency("city", "CITY", "Enter the city name"),
-			domain.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
+	requests := domain.RequestGroup{
+		Name: "Openweather API",
+		Env:  domain.Environment{},
+		Requests: []domain.Request{
+			{
+				Name:   "Get Current Weather",
+				Method: http.MethodGet,
+				URL:    "https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}",
+				Headers: map[string]string{
+					"Accept": "application/json",
+				},
+				Dependencies: []domain.Dependency{
+					domain.NewEnvVarDependency("city", "CITY", "Enter the city name"),
+					domain.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
+				},
+			},
+			{
+				Name:   "Get 5-Day Forecast",
+				Method: http.MethodGet,
+				URL:    "https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}",
+				Headers: map[string]string{
+					"Accept": "application/json",
+				},
+				Dependencies: []domain.Dependency{
+					domain.NewResponseBodyDependency("lat", "Get Current Weather", "/coord/lat"),
+					domain.NewResponseBodyDependency("lon", "Get Current Weather", "/coord/lon"),
+					// domain.NewOnePasswordDependency("Private", "OpenWeather", "api-key"),
+				},
+			},
 		},
 	}
 
+	// TODO: prompt user to pick request from group
+	request := requests.Requests[1]
+
 	resolverCtx := &domain.ResolverContext{
+		// Requests: domain.RequestGroup{},
 		Results: map[string]domain.Result{},
 		Prompt: func(name, prompt string) (string, error) {
 			fmt.Printf("%s: ", prompt)

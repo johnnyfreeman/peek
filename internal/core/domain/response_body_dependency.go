@@ -14,6 +14,14 @@ type ResponseBodyDependency struct {
 	pointer     string
 }
 
+func NewResponseBodyDependency(placeholder, request, pointer string) ResponseBodyDependency {
+	return ResponseBodyDependency{
+		placeholder: placeholder,
+		request:     request,
+		pointer:     pointer,
+	}
+}
+
 func (d ResponseBodyDependency) Placeholder() string {
 	return d.placeholder
 }
