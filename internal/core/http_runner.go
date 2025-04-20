@@ -1,43 +1,41 @@
-package app
+package core
 
 import (
 	"context"
 	"io"
 	"net/http"
-
-	"github.com/johnnyfreeman/peek/internal/core/domain"
 )
 
-type Runner struct {
+type HttpRunner struct {
 	Client *http.Client
 }
 
 func NewDefaultRunner(client *http.Client) Runner {
-	return Runner{
+	return HttpRunner{
 		Client: client,
 	}
 }
 
-func (r Runner) Run(ctx context.Context, request domain.Request) (domain.Result, error) {
+func (r HttpRunner) Run(ctx context.Context, request Request) (Result, error) {
 	httpReq, err := request.ToHTTPRequest()
 	if err != nil {
-		return domain.Result{}, err
+		return Result{}, err
 	}
 
 	httpReq = httpReq.WithContext(ctx)
 
 	resp, err := r.Client.Do(httpReq)
 	if err != nil {
-		return domain.Result{}, err
+		return Result{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return domain.Result{}, err
+		return Result{}, err
 	}
 
-	return domain.Result{
+	return Result{
 		RequestName: request.Name,
 		StatusCode:  resp.StatusCode,
 		Body:        body,

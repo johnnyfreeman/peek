@@ -1,4 +1,4 @@
-package domain
+package core
 
 type Placeholder struct {
 	Name       string

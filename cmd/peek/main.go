@@ -7,30 +7,18 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
-	"github.com/johnnyfreeman/peek/internal/app"
-	"github.com/johnnyfreeman/peek/internal/core/domain"
+	"github.com/johnnyfreeman/peek/internal/core"
 	"github.com/johnnyfreeman/peek/internal/infra/file"
+	"github.com/samber/lo"
 )
 
-type Loader interface {
-	Load(ctx context.Context, filename string) (domain.RequestGroup, error)
-}
-
-type Runner interface {
-	Run(context.Context, domain.Request) (domain.Result, error)
-}
-
-type Formatter interface {
-	Format(results domain.Result) ([]byte, error)
-}
-
 func main() {
-	code, out := Run(os.Args[1:], file.NewYAMLLoader(), app.NewDefaultRunner(http.DefaultClient), app.NewPrettyFormatter())
+	code, out := Run(os.Args[1:], file.NewYAMLLoader(), core.NewDefaultRunner(http.DefaultClient), core.NewPrettyFormatter())
 	fmt.Println(out)
 	os.Exit(code)
 }
 
-func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int, string) {
+func Run(args []string, loader core.Loader, runner core.Runner, formatter core.Formatter) (int, string) {
 	ctx := context.Background()
 
 	// if len(args) < 2 || args[0] != "run" {
@@ -44,10 +32,10 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 	// 	return 1, fmt.Sprintf("load error: %v", err)
 	// }
 
-	requests := domain.RequestGroup{
+	requestGroup := core.RequestGroup{
 		Name: "Openweather API",
-		Env:  domain.Environment{},
-		Requests: []domain.Request{
+		Env:  core.Environment{},
+		Requests: []core.Request{
 			{
 				Name:   "Get Current Weather",
 				Method: http.MethodGet,
@@ -55,9 +43,9 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 				Headers: map[string]string{
 					"Accept": "application/json",
 				},
-				Dependencies: []domain.Dependency{
-					domain.NewEnvVarDependency("city", "CITY", "Enter the city name"),
-					domain.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
+				Dependencies: []core.Dependency{
+					core.NewEnvVarDependency("city", "CITY", "Enter the city name"),
+					core.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
 				},
 			},
 			{
@@ -67,21 +55,24 @@ func Run(args []string, loader Loader, runner Runner, formatter Formatter) (int,
 				Headers: map[string]string{
 					"Accept": "application/json",
 				},
-				Dependencies: []domain.Dependency{
-					domain.NewResponseBodyDependency("lat", "Get Current Weather", "/coord/lat"),
-					domain.NewResponseBodyDependency("lon", "Get Current Weather", "/coord/lon"),
-					// domain.NewOnePasswordDependency("Private", "OpenWeather", "api-key"),
+				Dependencies: []core.Dependency{
+					core.NewResponseBodyDependency("lat", "Get Current Weather", "$.coord.lat", runner),
+					core.NewResponseBodyDependency("lon", "Get Current Weather", "$.coord.lon", runner),
+					core.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
+					// core.NewOnePasswordDependency("Private", "OpenWeather", "api-key"),
 				},
 			},
 		},
 	}
 
 	// TODO: prompt user to pick request from group
-	request := requests.Requests[1]
+	request := requestGroup.Requests[1]
 
-	resolverCtx := &domain.ResolverContext{
-		// Requests: domain.RequestGroup{},
-		Results: map[string]domain.Result{},
+	resolverCtx := &core.ResolverContext{
+		Requests: lo.KeyBy(requestGroup.Requests, func(request core.Request) string {
+			return request.Name
+		}),
+		Results: map[string]core.Result{},
 		Prompt: func(name, prompt string) (string, error) {
 			fmt.Printf("%s: ", prompt)
 			var input string

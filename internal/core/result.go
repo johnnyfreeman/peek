@@ -1,4 +1,4 @@
-package domain
+package core
 
 type Result struct {
 	RequestName string

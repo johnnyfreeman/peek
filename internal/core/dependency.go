@@ -1,4 +1,4 @@
-package domain
+package core
 
 import (
 	"context"
@@ -12,6 +12,7 @@ type Dependency interface {
 
 // Shared context for all resolvers (e.g. previous results, prompt function)
 type ResolverContext struct {
-	Results map[string]Result
-	Prompt  func(name, prompt string) (string, error)
+	Requests map[string]Request
+	Results  map[string]Result
+	Prompt   func(name, prompt string) (string, error)
 }

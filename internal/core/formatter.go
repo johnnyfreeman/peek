@@ -1,16 +1,15 @@
-package app
+package core
 
 import (
 	"bytes"
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/johnnyfreeman/peek/internal/core/domain"
 	"github.com/tidwall/pretty"
 )
 
 type Formatter interface {
-	Format(result domain.Result) ([]byte, error)
+	Format(result Result) ([]byte, error)
 }
 
 type PrettyFormatter struct{}
@@ -19,7 +18,7 @@ func NewPrettyFormatter() Formatter {
 	return PrettyFormatter{}
 }
 
-func (f PrettyFormatter) Format(result domain.Result) ([]byte, error) {
+func (f PrettyFormatter) Format(result Result) ([]byte, error) {
 	var buf bytes.Buffer
 
 	// Styles

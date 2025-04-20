@@ -5,24 +5,24 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/johnnyfreeman/peek/internal/core/domain"
+	"github.com/johnnyfreeman/peek/internal/core"
 )
 
 type fakeLoader struct {
-	Group domain.RequestGroup
+	Group core.RequestGroup
 	Err   error
 }
 
-func (f fakeLoader) Load(ctx context.Context, filename string) (domain.RequestGroup, error) {
+func (f fakeLoader) Load(ctx context.Context, filename string) (core.RequestGroup, error) {
 	return f.Group, f.Err
 }
 
 type fakeRunner struct {
-	Result domain.Result
+	Result core.Result
 	Err    error
 }
 
-func (f fakeRunner) Run(ctx context.Context, request domain.Request) (domain.Result, error) {
+func (f fakeRunner) Run(ctx context.Context, request core.Request) (core.Result, error) {
 	return f.Result, f.Err
 }
 
@@ -31,7 +31,7 @@ type fakeFormatter struct {
 	Err error
 }
 
-func (f fakeFormatter) Format(result domain.Result) ([]byte, error) {
+func (f fakeFormatter) Format(result core.Result) ([]byte, error) {
 	if f.Err != nil {
 		return nil, f.Err
 	}
@@ -41,8 +41,8 @@ func (f fakeFormatter) Format(result domain.Result) ([]byte, error) {
 func TestRun_Success(t *testing.T) {
 	args := []string{"run", "fake.yml"}
 
-	loader := fakeLoader{Group: domain.RequestGroup{Name: "test"}}
-	runner := fakeRunner{Result: domain.Result{RequestName: "one", StatusCode: 200}}
+	loader := fakeLoader{Group: core.RequestGroup{Name: "test"}}
+	runner := fakeRunner{Result: core.Result{RequestName: "one", StatusCode: 200}}
 	formatter := fakeFormatter{Out: "Request one: 200 OK"}
 
 	code, out := Run(args, loader, runner, formatter)
