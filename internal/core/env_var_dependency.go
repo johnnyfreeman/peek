@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+
+	"github.com/charmbracelet/log"
 )
 
 type EnvVarDependency struct {
@@ -25,6 +27,9 @@ func (d EnvVarDependency) Placeholder() string {
 }
 
 func (d EnvVarDependency) Resolve(ctx context.Context, rctx *ResolverContext) (string, error) {
+	log.Debug("looking up env variable",
+		"name", d.name,
+	)
 	if val, ok := os.LookupEnv(d.name); ok {
 		return val, nil
 	}
