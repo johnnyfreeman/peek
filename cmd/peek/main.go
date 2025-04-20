@@ -56,8 +56,8 @@ func Run(args []string, loader core.Loader, runner core.Runner, formatter core.F
 					"Accept": "application/json",
 				},
 				Dependencies: []core.Dependency{
-					core.NewResponseBodyDependency("lat", "Get Current Weather", "$.coord.lat", runner),
-					core.NewResponseBodyDependency("lon", "Get Current Weather", "$.coord.lon", runner),
+					core.NewResponseBodyDependency("lat", "Get Current Weather", "$.coord.lat"),
+					core.NewResponseBodyDependency("lon", "Get Current Weather", "$.coord.lon"),
 					core.NewEnvVarDependency("api_key", "OPENWEATHER_API_KEY", "Enter your OpenWeather API key"),
 					// core.NewOnePasswordDependency("Private", "OpenWeather", "api-key"),
 				},
@@ -79,6 +79,7 @@ func Run(args []string, loader core.Loader, runner core.Runner, formatter core.F
 			_, err := fmt.Scanln(&input)
 			return input, err
 		},
+		Runner: runner,
 	}
 
 	if err := request.Resolve(ctx, resolverCtx); err != nil {

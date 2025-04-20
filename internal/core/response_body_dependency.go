@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/log"
 	"github.com/oliveagle/jsonpath"
 )
 
@@ -13,15 +12,13 @@ type ResponseBodyDependency struct {
 	placeholder string
 	request     string
 	pointer     string
-	runner      Runner
 }
 
-func NewResponseBodyDependency(placeholder, request, pointer string, runner Runner) ResponseBodyDependency {
+func NewResponseBodyDependency(placeholder, request, pointer string) ResponseBodyDependency {
 	return ResponseBodyDependency{
 		placeholder: placeholder,
 		request:     request,
 		pointer:     pointer,
-		runner:      runner,
 	}
 }
 
@@ -30,28 +27,12 @@ func (d ResponseBodyDependency) Placeholder() string {
 }
 
 func (d ResponseBodyDependency) Resolve(ctx context.Context, rctx *ResolverContext) (string, error) {
-
-	if result, ok := rctx.Results[d.request]; ok {
-		return extractJSONPointer(result.Body, d.pointer)
+	result, err := rctx.GetResult(ctx, d.request)
+	if err != nil {
+		return "", err
 	}
 
-	if request, ok := rctx.Requests[d.request]; ok {
-		if err := request.Resolve(ctx, rctx); err != nil {
-			panic(err)
-		}
-		log.Debug("request resolved", "url", request.URL)
-
-		result, err := d.runner.Run(ctx, request)
-		if err != nil {
-			return "", err
-		}
-
-		rctx.Results[request.Name] = result
-
-		return extractJSONPointer(result.Body, d.pointer)
-	}
-
-	return "", fmt.Errorf("result for request %q not found", d.request)
+	return extractJSONPointer(result.Body, d.pointer)
 }
 
 func extractJSONPointer(body []byte, pointer string) (string, error) {
