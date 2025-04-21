@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/johnnyfreeman/peek/internal/core"
@@ -28,8 +31,10 @@ func Run(args []string, loader core.Loader, runner core.Runner, formatter core.F
 		return 1, fmt.Sprintf("load error: %v", err)
 	}
 
-	// TODO: prompt user to pick request from group
-	request := requestGroup.Requests[0]
+	request, err := chooseRequest(requestGroup)
+	if err != nil {
+		return 1, fmt.Sprintf("choose request error: %v", err)
+	}
 
 	resolverCtx := &core.ResolverContext{
 		Requests: lo.KeyBy(requestGroup.Requests, func(request core.Request) string {
@@ -61,4 +66,27 @@ func Run(args []string, loader core.Loader, runner core.Runner, formatter core.F
 	}
 
 	return 0, string(out)
+}
+
+func chooseRequest(group core.RequestGroup) (core.Request, error) {
+	fmt.Println("Choose a request:")
+
+	for i, req := range group.Requests {
+		fmt.Printf("[%d] %s\n", i+1, req.Name)
+	}
+
+	fmt.Print("Enter number: ")
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return core.Request{}, err
+	}
+
+	input = strings.TrimSpace(input)
+	index, err := strconv.Atoi(input)
+	if err != nil || index < 1 || index > len(group.Requests) {
+		return core.Request{}, fmt.Errorf("invalid selection")
+	}
+
+	return group.Requests[index-1], nil
 }
