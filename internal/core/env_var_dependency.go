@@ -30,11 +30,18 @@ func (d EnvVarDependency) Resolve(ctx context.Context, rctx *ResolverContext) (s
 	log.Debug("looking up env variable",
 		"name", d.name,
 	)
+
 	if val, ok := os.LookupEnv(d.name); ok {
+		log.Debug("found env variable",
+			"name", d.name,
+			"value", val,
+		)
 		return val, nil
 	}
+
 	if rctx.Prompt != nil {
 		return rctx.Prompt(d.name, d.prompt)
 	}
+
 	return "", fmt.Errorf("env var %q not set and no prompt available", d.name)
 }

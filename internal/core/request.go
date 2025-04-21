@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 type Request struct {
@@ -40,6 +42,9 @@ func (r *Request) Resolve(ctx context.Context, resolverCtx *ResolverContext) err
 		}
 		resolved[dep.Placeholder()] = val
 	}
+	log.Debug("dependencies resolved",
+		"resolved", resolved,
+	)
 
 	// Replace placeholders in URL
 	r.URL = replacePlaceholders(r.URL, resolved)
@@ -51,6 +56,10 @@ func (r *Request) Resolve(ctx context.Context, resolverCtx *ResolverContext) err
 
 	// Body templating is not supported (yet)
 	// Could be added here if needed.
+
+	log.Debug("placeholders replaced",
+		"request", r,
+	)
 
 	return nil
 }

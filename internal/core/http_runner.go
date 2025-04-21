@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"net/http"
+
+	"github.com/charmbracelet/log"
 )
 
 type HttpRunner struct {
@@ -17,6 +19,9 @@ func NewDefaultRunner(client *http.Client) Runner {
 }
 
 func (r HttpRunner) Run(ctx context.Context, request Request) (Result, error) {
+	log.Debug("Sending request...",
+		"request", request,
+	)
 	httpReq, err := request.ToHTTPRequest()
 	if err != nil {
 		return Result{}, err
