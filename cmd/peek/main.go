@@ -17,7 +17,7 @@ import (
 
 func main() {
 	code, out := Run(os.Args[1:], file.NewYAMLLoader(), core.NewDefaultRunner(http.DefaultClient), core.NewPrettyFormatter())
-	log.Error(out)
+	fmt.Println(out)
 	os.Exit(code)
 }
 
