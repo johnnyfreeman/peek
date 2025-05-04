@@ -22,7 +22,7 @@ func (l YamlLoader) Load(ctx context.Context, filename string) (core.RequestGrou
 		return core.RequestGroup{}, err
 	}
 
-	path := filepath.Join(home, ".config", "peek", "requests", filename+".yaml")
+	path := filepath.Join(home, ".config", "peek", "requests", filename)
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return core.RequestGroup{}, fmt.Errorf("failed to read file: %w", err)

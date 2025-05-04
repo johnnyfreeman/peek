@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -24,9 +25,20 @@ func main() {
 func Run(args []string, loader core.Loader, runner core.Runner, formatter core.Formatter) (int, string) {
 	ctx := context.Background()
 
-	filename := args[0]
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return 1, fmt.Sprintf("user home directory error: %v", err)
+	}
 
-	requestGroup, err := loader.Load(ctx, filename)
+	path := filepath.Join(home, ".config", "peek", "requests")
+	files, err := os.ReadDir(path)
+
+	file, err := chooseRequestGroup(files)
+	if err != nil {
+		return 1, fmt.Sprintf("choose request error: %v", err)
+	}
+
+	requestGroup, err := loader.Load(ctx, file.Name())
 	if err != nil {
 		return 1, fmt.Sprintf("load error: %v", err)
 	}
@@ -89,4 +101,27 @@ func chooseRequest(group core.RequestGroup) (core.Request, error) {
 	}
 
 	return group.Requests[index-1], nil
+}
+
+func chooseRequestGroup(groups []os.DirEntry) (os.DirEntry, error) {
+	fmt.Println("Choose a request group:")
+
+	for i, file := range groups {
+		fmt.Printf("[%d] %s\n", i+1, file.Name())
+	}
+
+	fmt.Print("Enter number: ")
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	input = strings.TrimSpace(input)
+	index, err := strconv.Atoi(input)
+	if err != nil || index < 1 || index > len(groups) {
+		return nil, fmt.Errorf("invalid selection")
+	}
+
+	return groups[index-1], nil
 }
